@@ -1,13 +1,6 @@
 import React from 'react';
-import { View } from 'react-native';
-import Swipe from './components/ImageCarousel';
+import ImageCarousel from './components/ImageCarousel';
 
-const App = () => {
-	return (
-		<View>
-			<Swipe />
-		</View>
-	);
-};
+const App = () => <ImageCarousel />;
 
 export default App;
