@@ -1,105 +1,166 @@
-import React, { useState } from 'react';
-import { View, Image, Text, StyleSheet, Button } from 'react-native';
-import server from '../server/server';
-// import { Storage } from 'expo-storage';
-
-// Storage.setItem({ key: 'block', value: JSON.stringify(block) });
-
-// const lastImage = async () => {
-// 	const lastData = JSON.parse(await Storage.getItem({ key: 'block' }));
-// };
+import React, { useEffect, useState } from 'react';
+import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Storage } from 'expo-storage';
+import { URL, randomImage } from './Constants';
 
 const ImageCarousel = () => {
 	const [block, setBlock] = useState(0);
-	const [lastURL, setLastURL] = useState('');
 	const [data, setData] = useState(false);
+	const [uri, setUri] = useState('');
 	const [loading, setLoading] = useState(true);
 
-	const randomImage = (arr, page) => {
-		return arr[page].images[
-			Math.floor(Math.random() * arr[page].images.length)
-		];
+	const handleLoad = async () => {
+		const storedURL = JSON.parse(await Storage.getItem({ key: 'URL' }));
+		const storedBlock = JSON.parse(await Storage.getItem({ key: 'BLOCK' }));
+		if (storedURL && storedBlock) {
+			setBlock(storedBlock);
+			setUri(storedURL);
+		}
+		fetch(URL)
+			.then(res => res.json())
+			.then(json => setData(json))
+			.catch(error => console.log(error));
 	};
 
-	const handlePrev = () => {
-		setBlock(block - 1);
-	};
-	const handleNext = () => {
-		setBlock(block + 1);
+	const handlePrev = async () => {
+		const prev = block - 1;
+		setBlock(prev);
+		await Storage.setItem({ key: 'BLOCK', value: JSON.stringify(prev) });
+		let currImage = randomImage(data, prev);
+		setUri(currImage);
+		await Storage.setItem({ key: 'URL', value: JSON.stringify(currImage) });
 	};
 
-	return (
+	const handleNext = async () => {
+		const next = block + 1;
+		setBlock(next);
+		await Storage.setItem({
+			key: 'BLOCK',
+			value: JSON.stringify(next),
+		});
+		let currImage = randomImage(data, next);
+		setUri(currImage);
+		await Storage.setItem({
+			key: 'URL',
+			value: JSON.stringify(currImage),
+		});
+	};
+
+	useEffect(() => {
+		if (data) {
+			if (uri === '') {
+				Storage.setItem({
+					key: 'BLOCK',
+					value: JSON.stringify(block),
+				});
+				let currImage = randomImage(data, block);
+				setUri(currImage);
+				setLoading(false);
+				Storage.setItem({ key: 'URL', value: JSON.stringify(currImage) });
+			} else {
+				setUri(uri);
+				setBlock(block);
+				setLoading(false);
+			}
+		}
+	}, [data]);
+
+	return loading ? (
 		<View style={style.container}>
-			<Text style={style.title}>Check your next destination at Puzzle</Text>
-			<Text style={style.imgTitle}>{server[block].title}</Text>
+			<TouchableOpacity style={style.load} onPress={handleLoad}>
+				<Text style={style.btnText}>Load Images 🌎</Text>
+			</TouchableOpacity>
+		</View>
+	) : (
+		<View style={style.container}>
+			<Text style={style.title}>IMAGE CAROUSEL COMPONENT</Text>
+			{data.length ? (
+				<Text style={style.imgTitle}>{data[block].title}</Text>
+			) : null}
 			<View style={style.imgContainer}>
-				<Image source={randomImage(server, block)} style={style.imagen} />
+				<Image source={{ uri }} style={style.img} />
 			</View>
 			<View style={style.btnContainer}>
 				{block > 0 ? (
-					<Button onPress={handlePrev} style={style.btn} title='Prev' />
+					<TouchableOpacity style={style.btn} onPress={handlePrev}>
+						<Text style={style.btnText}>◀</Text>
+					</TouchableOpacity>
 				) : null}
-				{block < server.length - 1 ? (
-					<Button onPress={handleNext} style={style.btn} title='Next' />
+				{block < data.length - 1 ? (
+					<TouchableOpacity style={style.btn} onPress={handleNext}>
+						<Text style={style.btnText}>▶</Text>
+					</TouchableOpacity>
 				) : null}
 			</View>
 		</View>
 	);
 };
 const style = StyleSheet.create({
+	load: {
+		flex: 1,
+		position: 'absolute',
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: 10,
+		borderRadius: 10,
+		borderColor: '#f5f5dc',
+		borderWidth: 3,
+	},
+	btnText: {
+		fontSize: 24,
+		color: '#f5f5dc',
+		backgroundColor: 'transparent',
+		fontWeight: 'bold',
+	},
 	container: {
 		width: '100%',
+		marginTop: 25,
 		flex: 1,
 		flexDirection: 'column',
 		alignItems: 'center',
 		justifyContent: 'center',
-		marginTop: 40,
-		backgroundColor: '#000000',
+		backgroundColor: 'black',
 	},
 	title: {
 		flex: 1,
-		position: 'absolute',
-		alignSelf: 'center',
+		alignItems: 'center',
+		position: 'relative',
+		fontSize: 24,
 		fontWeight: 'bold',
 		textDecorationLine: 'underline',
-		color: '#f0f8ff',
-	},
-	btnContainer: {
-		flex: 1,
-		flexDirection: 'row',
-		position: 'relative',
-		alignContent: 'center',
-		justifyContent: 'space-evenly',
-		marginTop: 160,
-	},
-	btn: {
-		flex: 1,
-		color: '#696969',
-		backgroundColor: '#f5f5dc',
-		borderRadius: 5,
+		color: '#f5f5dc',
 	},
 	imgContainer: {
-		flex: 7,
+		flex: 10,
 		width: '100%',
 		height: '100%',
 	},
-	imagen: { width: '100%', height: '100%', resizeMode: 'contain' },
+	img: {
+		width: '100%',
+		height: '100%',
+		resizeMode: 'contain',
+	},
 	imgTitle: {
-		flex: 1,
 		position: 'relative',
 		alignSelf: 'center',
 		fontWeight: 'bold',
-		color: 'yellow',
+		color: '#f5f5dc',
+		fontSize: 20,
 	},
-	// paginate: {
-	// 	display: 'flex',
-	// 	flexDirection: 'row',
-	// 	position: 'absolute',
-	// 	bottom: 0,
-	// 	alignSelf: 'center',
-	// },
-	// pageText: { color: '#F3F1F5', margin: 3 },
-	// pageActiveText: { color: '#BFA2DB', margin: 3 },
+	btnContainer: {
+		flex: 0,
+		flexDirection: 'row',
+		justifyContent: 'space-evenly',
+		width: '100%',
+	},
+	btn: {
+		color: '#f5f5dc',
+		backgroundColor: 'transparent',
+		padding: 10,
+		borderRadius: 10,
+		borderColor: '#f5f5dc',
+		borderWidth: 3,
+	},
 });
 
 export default ImageCarousel;
