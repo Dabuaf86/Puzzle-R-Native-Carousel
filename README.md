@@ -25,3 +25,5 @@
 * On future commits it will also be able to scroll by touch and show part of the previous and following images as you go.
 
 Enjoy!
+
+[Ver video del componente en funcionamiento](https://youtu.be/G6KIxEIKQmw)
