@@ -26,5 +26,5 @@
 
 Enjoy!
 
-[Ver video del componente en funcionamiento](https://youtu.be/G6KIxEIKQmw)
+[Ver video del componente en funcionamiento](https://youtu.be/G6KIxEIKQmw):
 **https://youtu.be/G6KIxEIKQmw**
